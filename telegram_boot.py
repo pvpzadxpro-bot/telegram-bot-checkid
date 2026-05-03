@@ -21,7 +21,7 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 ALLOWED_GROUP_ID = -1003564455189
 API_INFO_URL = "https://info-ob49.onrender.com/api/account/"
-RENDER_URL = os.environ.get("RENDER_EXTERNAL_URL",)
+RENDER_URL = os.environ.get("RENDER_EXTERNAL_URL")
 
 REQUIRED_CHATS = [
     {"id": "@zadxproooo", "name": "Канал 1", "url": "https://t.me/zadxproooo"},
