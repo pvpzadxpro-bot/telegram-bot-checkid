@@ -16,7 +16,7 @@ def home():
     return "Bot is running"
 
 # ===== CONFIG =====
-BOT_TOKEN = "8555983030:AAGZSv3GDQ1ykoVs7nz-lMdcRhioG-kFEoc"
+BOT_TOKEN = "8791038778:AAH6hI45NA-ADCzv82qFPG2QVT2CCRT9its"
 bot = telebot.TeleBot(BOT_TOKEN)
 
 ALLOWED_GROUP_ID = -1003564455189
@@ -31,21 +31,24 @@ REQUIRED_CHATS = [
 
 ALL_REGIONS = ["ru", "sg", "ind", "br", "me", "us", "id", "pk", "bd", "cis", "tw", "vn", "th"]
 
+# ===== KEEP ALIVE =====
+def keep_alive():
+    while True:
+        try:
+            urllib.request.urlopen(RENDER_URL)
+            print("✅ Keep alive!")
+        except:
+            pass
+        time.sleep(300)
+
 # ===== ФУНКСИЯҲО =====
 def escape_md(text):
-    if not text: return "Холӣ"
-    return str(text).replace('_', '\\_').replace('*', '\\*').replace('[', '\\[').replace('`', '\\`')
-
-def get_avatar_name(avatar_id):
-    try:
-        with open('avatars.json', 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            for item in data:
-                if str(item.get('id')) == str(avatar_id):
-                    return escape_md(item.get('name_text'))
-    except:
-        pass
-    return "Аватар ёфт нашуд"
+    if not text:
+        return "Холӣ"
+    text = str(text)
+    for ch in ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']:
+        text = text.replace(ch, f'\\{ch}')
+    return text
 
 def format_date(unix_timestamp):
     try:
@@ -78,16 +81,6 @@ def get_ff_player(player_id):
             continue
     return None, None
 
-# ===== KEEP ALIVE =====
-def keep_alive():
-    while True:
-        try:
-            urllib.request.urlopen(RENDER_URL)
-            print("✅ Keep alive!")
-        except:
-            pass
-        time.sleep(300)  # 5 дақиқа
-
 # ===== HANDLERS =====
 @bot.message_handler(content_types=['new_chat_members'])
 def welcome_new_member(message):
@@ -100,21 +93,21 @@ def welcome_new_member(message):
         markup.add(InlineKeyboardButton(text="📜 КОМАНДАҲО", callback_data="show_help"))
         bot.send_message(
             message.chat.id,
-            f"Ассалому алейкум, {escape_md(new_user.first_name)}! 👋\n"
-            f"Хуш омадед ба гурӯҳи мо. Барои дидани командаҳо тугмаро пахш кунед.",
-            reply_markup=markup,
-            parse_mode="Markdown"
+            f"Ассалому алейкум, {new_user.first_name}! 👋\n"
+            f"Хуш омадед ба гурӯҳи мо.\n"
+            f"Барои дидани командаҳо тугмаро пахш кунед.",
+            reply_markup=markup
         )
 
 @bot.message_handler(commands=['help'])
 def help_handler(message):
     help_text = (
-        "📜 *ДАСТУРАМАЛИ КОМАНДАҲО:*\n\n"
-        "👉 `/check ID` — Тафтиши пурраи аккаунт\n"
-        "👉 `/start` — Оғози бот\n\n"
-        "📢 *Бот танҳо барои аъзоёни каналҳои мо кор мекунад!*"
+        "📜 ДАСТУРАМАЛИ КОМАНДАҲО:\n\n"
+        "👉 /check ID - Тафтиши пурраи аккаунт\n"
+        "👉 /start - Оғози бот\n\n"
+        "📢 Бот танҳо барои аъзоёни каналҳои мо кор мекунад!"
     )
-    bot.reply_to(message, help_text, parse_mode="Markdown")
+    bot.reply_to(message, help_text)
 
 @bot.message_handler(commands=['start'])
 def start_handler(message):
@@ -125,15 +118,13 @@ def start_handler(message):
             markup.add(InlineKeyboardButton(text=f"📢 {chat['name']}", url=chat['url']))
         bot.send_message(
             message.chat.id,
-            "❗️ *Аввал ба каналҳо обуна шав:*",
-            parse_mode="Markdown",
+            "❗ Аввал ба каналҳо обуна шав:",
             reply_markup=markup
         )
     else:
         bot.send_message(
             message.chat.id,
-            "✅ *Хуш омадед!*\n\nДар гурӯҳ `/check ID` нависед.",
-            parse_mode="Markdown"
+            "✅ Хуш омадед!\n\nДар гурӯҳ /check ID нависед."
         )
 
 @bot.message_handler(commands=['check'])
@@ -142,16 +133,16 @@ def check_id_command(message):
         return
 
     if get_not_subscribed(message.from_user.id):
-        bot.reply_to(message, "❌ Аввал ба каналҳо обуна шавед! (Дар личка /start нависед)")
+        bot.reply_to(message, "❌ Аввал ба каналҳо обуна шавед!")
         return
 
     args = message.text.split()[1:]
     if not args:
-        bot.reply_to(message, "❓ Намуна: `/check 8898233939`", parse_mode="Markdown")
+        bot.reply_to(message, "❓ Намуна: /check 8898233939")
         return
 
     player_id = args[-1]
-    wait_msg = bot.reply_to(message, f"📡 *Ҷустуҷӯ:* `{player_id}`...", parse_mode="Markdown")
+    wait_msg = bot.reply_to(message, f"📡 Ҷустуҷӯ: {player_id}...")
 
     data, region = get_ff_player(player_id)
     if not data:
@@ -163,48 +154,46 @@ def check_id_command(message):
     c = data.get("clanBasicInfo", {})
     cr = data.get("creditScoreInfo", {})
 
-    nickname = escape_md(b.get('nickname', '?'))
-    bio = escape_md(s.get('signature', 'Холӣ'))
-    clan_name = escape_md(c.get('clanName', 'Нест'))
-    avatar_name = get_avatar_name(b.get('headPic', 0))
+    nickname = str(b.get('nickname', '?'))
+    bio = str(s.get('signature', 'Холӣ'))
+    clan_name = str(c.get('clanName', 'Нест'))
 
     last_log = int(b.get("lastLoginAt", 0))
     days_off = int((time.time() - last_log) / 86400) if last_log > 0 else 0
     status = "🟢 ФАЪОЛ" if days_off < 7 else "🔴 ОФЛАЙН"
 
     text = (
-        f"📂 *МАЪЛУМОТИ ПУРРАИ АККАУНТ*\n"
+        f"📂 МАЪЛУМОТИ ПУРРАИ АККАУНТ\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"👤 *Никнейм:* {nickname}\n"
-        f"🆔 *ID:* `{player_id}`\n"
-        f"🌍 *Регион:* {region}\n"
-        f"🛡️ *Статус:* {status}\n"
+        f"👤 Никнейм: {nickname}\n"
+        f"🆔 ID: {player_id}\n"
+        f"🌍 Регион: {region}\n"
+        f"🛡 Статус: {status}\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"🖼️ *Аватар:* {avatar_name}\n"
-        f"📊 *Сатҳ:* {b.get('level','?')}\n"
-        f"📈 *Таҷриба:* {b.get('exp','?')}\n"
-        f"❤️ *Лайкҳо:* {b.get('liked',0)}\n"
-        f"🏆 *Ранг:* {b.get('rank', '?')}\n"
-        f"📉 *Кредит:* {cr.get('creditScore', 100)}/100\n"
+        f"📊 Сатҳ: {b.get('level','?')}\n"
+        f"📈 Таҷриба: {b.get('exp','?')}\n"
+        f"❤️ Лайкҳо: {b.get('liked',0)}\n"
+        f"🏆 Ранг: {b.get('rank', '?')}\n"
+        f"📉 Кредит: {cr.get('creditScore', 100)}/100\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"🏰 *Клан:* {clan_name}\n"
-        f"🆔 *ID Клан:* `{c.get('clanId','0')}`\n"
-        f"🎖️ *Сатҳи Клан:* {c.get('clanLevel','?')}\n"
-        f"👥 *Аъзоён:* {c.get('memberNum','?')}/{c.get('capacity','?')}\n"
+        f"🏰 Клан: {clan_name}\n"
+        f"🆔 ID Клан: {c.get('clanId','0')}\n"
+        f"🎖 Сатҳи Клан: {c.get('clanLevel','?')}\n"
+        f"👥 Аъзоён: {c.get('memberNum','?')}/{c.get('capacity','?')}\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"🕒 *Охирин бор:* {format_date(last_log)}\n"
-        f"📅 *Сохта шуд:* {format_date(b.get('createAt', 0))}\n"
-        f"⏳ *Офлайн:* {days_off} рӯз\n"
+        f"🕒 Охирин бор: {format_date(last_log)}\n"
+        f"📅 Сохта шуд: {format_date(b.get('createAt', 0))}\n"
+        f"⏳ Офлайн: {days_off} руз\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"💬 *Bio:* {bio}\n"
-        f"🌐 *Забон:* {s.get('language','?')}\n"
+        f"💬 Bio: {bio}\n"
+        f"🌐 Забон: {s.get('language','?')}\n"
         f"━━━━━━━━━━━━━━━━━━━━"
     )
 
     try:
-        bot.edit_message_text(text, message.chat.id, wait_msg.message_id, parse_mode="Markdown")
+        bot.edit_message_text(text, message.chat.id, wait_msg.message_id)
     except Exception as e:
-        bot.edit_message_text(str(e), message.chat.id, wait_msg.message_id)
+        print(f"Хато: {e}")
 
 @bot.callback_query_handler(func=lambda call: call.data == "show_help")
 def callback_help(call):
@@ -212,8 +201,9 @@ def callback_help(call):
     help_handler(call.message)
 
 # ===== ОҒОЗ =====
-if __name__ == "__main__":
-    print("🚀 Бот фаъол шуд!")
-    threading.Thread(target=lambda: app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000))), daemon=True).start()
-    threading.Thread(target=keep_alive, daemon=True).start()
-    bot.infinity_polling()
+print("🚀 Бот фаъол шуд!")
+
+threading.Thread(target=lambda: app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000))), daemon=True).start()
+threading.Thread(target=keep_alive, daemon=True).start()
+
+bot.infinity_polling()
